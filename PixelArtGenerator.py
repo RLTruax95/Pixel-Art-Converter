@@ -5,9 +5,9 @@ from math import sqrt
 from PIL import ImageDraw
 
 def main():
-    path = "C:/Users/Truax/OneDrive/Pictures/1abf3cbc-37a8-4690-9c7b-fd410bd4264c.jpg" #temporarily load the image
+    path = " " #temporarily load the image
     image_array : np.array
-    desired_colors = [[180, 0, 0], [187, 128, 90], [145, 80, 28],       #all the colors for the 1x1 round tile from lego website
+    availableColors = [[180, 0, 0], [187, 128, 90], [145, 80, 28],       #all the colors for the 1x1 round tile from lego website
                       [225, 190, 161], [95, 49, 9], [170, 125, 85],
                       [214, 121, 35], [55, 33, 0], [252, 172, 0],
                       [137, 125, 98], [204, 185, 141], [185, 149, 59],
@@ -29,19 +29,10 @@ def main():
 
     image_array = np.array(image)       #convert the image to a numpy array
 
-    print("Image is ", image_array.shape[1], " pixels wide.")       #display dimensions and obtain target dimensions
-    xVal = int(input("How many Legos wide?: "))
-    print("Image is ", image_array.shape[0], " pixels tall.")
-    yVal = int(input("How many Legos tall?: "))
-
-    print("\nWhite and black are always included")
-    colorCount = int(input("How many other colors would you like to use?: "))
-    for i in range(colorCount):
-        red = int(input("\nRed Value: "))
-        green = int(input("Green Value: "))
-        blue = int(input("Blue Value: "))
-        desired_colors.append([red, green, blue])
-        print("Color added")
+    print("Image is ", image_array.shape[0], " pixels tall.")       #display dimensions and obtain target dimensions
+    xVal = int(input("How many Legos tall?: "))
+    print("Image is ", image_array.shape[1], " pixels wide.")
+    yVal = int(input("How many Legos wide?: "))
 
     lego_image = np.zeros((xVal, yVal, 3), dtype=np.uint8)      #create a new array of the target size full of zeros
     colored_image = np.zeros((xVal, yVal, 3), dtype=np.uint8)      #create a new array of the target size full of zeros
@@ -61,53 +52,47 @@ def main():
             block = image_array[xStart:xEnd, yStart:yEnd, :3]       #get a block of pixels
             avg_rgb = block.mean(axis=(0,1))        #average the RGB values for the new pixel
             lego_image[i, j] = avg_rgb.astype(np.uint8)     #save the new pixel to the finished image
-            colored_image[i,j]  = compare_color(avg_rgb, desired_colors)
+            colored_image[i,j]  = compare_color(avg_rgb, availableColors)
 
-    circle_img = circles_from_pixels(colored_image, circle_diameter=20, bg_color=(0,0,0))
+    circle_img = circles_from_pixels(colored_image, circle_diameter=20, bg_color=(0,0,0))       #convert the colored_image to a image drawn with circles instead of pixels
     circle_img.show()
-    colored_image = Image.fromarray(colored_image, mode="RGB")
-    colored_image.show()
 
-def compare_color(current_color, color_options):
+def compare_color(current_color, color_options):        #function to find the pixels nearest color amongst the available colors
     best_distance = None
     color_choice = None
 
-    for color in color_options:
-        distance = (
+    for color in color_options:     #finds the distance from the current color and the available color by finding the difference
+        distance = (                #between the red, green, and blue factors of the pixel
             (color[0] - current_color[0]) ** 2 +
             (color[1] - current_color[1]) ** 2 +
             (color[2] - current_color[2]) ** 2)
 
-        if best_distance is None or distance < best_distance:
+        if best_distance is None or distance < best_distance:       #saves the closest color
             best_distance = distance
             color_choice = color
-    return color_choice
+    return color_choice     
 
-def circles_from_pixels(pixel_array, circle_diameter=20, bg_color=(255, 255, 255)):
-    """
-    pixel_array: numpy array (H, W, 3) of uint8 RGB values
-    circle_diameter: diameter in pixels for each circle
-    bg_color: background color of the new image
-    """
-    h, w, _ = pixel_array.shape
-    r = circle_diameter // 2
+def circles_from_pixels(pixel_array, circle_diameter=20, bg_color=(255, 255, 255)):     #converts the pixels to a series of dots
+    
+    h, w, _ = pixel_array.shape         #gets the dimensions of the image
+    r = circle_diameter // 2            #sets the circle size
 
     # Size of the new image: one circle cell per pixel
-    out_width = w * circle_diameter
+    out_width = w * circle_diameter     #calculates the new image size
     out_height = h * circle_diameter
 
-    out_img = Image.new("RGB", (out_width, out_height), bg_color)
-    draw = ImageDraw.Draw(out_img)
+    out_img = Image.new("RGB", (out_width, out_height), bg_color)   #generate a new image
+    draw = ImageDraw.Draw(out_img)      #draws the background onto the image
 
-    for y in range(h):
+    for y in range(h):      #loop to draw the pixels in as cirlces
         for x in range(w):
             color = tuple(pixel_array[y, x].tolist())
 
             cx = x * circle_diameter + r   # circle center x
             cy = y * circle_diameter + r   # circle center y
 
-            bbox = [cx - r, cy - r, cx + r, cy + r]
-            draw.ellipse(bbox, fill=color, outline=None)
+            bbox = [cx - r, cy - r, cx + r, cy + r]     #defines the box that the cirlce will be drawn in
+            draw.ellipse(bbox, fill=color, outline=None)        #draw circle
 
     return out_img
     
