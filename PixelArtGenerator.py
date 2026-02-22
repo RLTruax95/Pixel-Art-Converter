@@ -5,27 +5,45 @@ from math import sqrt
 from PIL import ImageDraw
 
 def main():
-    path = " " #temporarily load the image
-    image_array : np.array
-    availableColors = [[180, 0, 0], [187, 128, 90], [145, 80, 28],       #all the colors for the 1x1 round tile from lego website
-                      [225, 190, 161], [95, 49, 9], [170, 125, 85],
-                      [214, 121, 35], [55, 33, 0], [252, 172, 0],
-                      [137, 125, 98], [204, 185, 141], [185, 149, 59],
-                      [250, 200, 10], [255, 236, 108], [245, 243, 215],
-                      [119, 119, 78], [225, 255, 0], [165, 202, 24],
-                      [226, 249, 154], [88, 171, 65], [0, 133, 43],
-                      [211, 242, 234], [0, 152, 148], [104, 195, 226],
-                      [70, 155, 195], [30, 90, 168], [112, 129, 154],
-                      [25, 50, 90], [0, 0, 0], [68, 26, 145],
-                      [160, 110, 185], [205, 164, 222], [144, 31, 118],
-                      [200, 80, 155], [255, 158, 205], [114, 0, 18],
-                      [240, 109, 120], [245, 245, 245], [150, 150, 150],
-                      [140, 140, 140], [100, 100, 100]]  
+    path =  "C:/Users/Truax/OneDrive/Pictures/KCat2.png" #temporarily load the image
+    image_array : np.array  #all the colors for the 1x1 round tile from lego website
+    availableColors = [[180, 0, 0], [187, 128, 90], [145, 80, 28],       #Bright Red, Nougat, Dark Orange
+                      [225, 190, 161], [95, 49, 9], [170, 125, 85],      #Light Nougat, Reddish Brown, Medium Nougat
+                      [214, 121, 35], [55, 33, 0], #[252, 172, 0],        #Bright Orange, Dark Brown, Flame Yellowish Orange
+                      [137, 125, 98], [204, 185, 141], [185, 149, 59],   #Sand Yellow, Brick Yellow, Warm Gold
+                      [250, 200, 10], [255, 236, 108], #[245, 243, 215],  #Bright Yellow, Cool Yellow, White Glow
+                      [119, 119, 78], [225, 255, 0], [165, 202, 24],     #Olive Green, Vibrant Yellow, Bright Yellowish Green
+                      [226, 249, 154], [88, 171, 65], [0, 133, 43],      #Spring Yellowish Green, Bright Green, Dark Green
+                      [211, 242, 234], [0, 152, 148], [104, 195, 226],   #Aqua, Bright, Bluish Green, Medium Azur
+                      [70, 155, 195], [30, 90, 168], [112, 129, 154],    #Dark Azur, Bright Blue, Sand Blue
+                      [25, 50, 90], [0, 0, 0], [68, 26, 145],            #Earth Blue, Black, Medium Lilac
+                      [160, 110, 185], [205, 164, 222], [144, 31, 118],  #Medium Lavender, Lavender, Bright Reddish Violet
+                      [200, 80, 155], [255, 158, 205], [114, 0, 18],     #Bright Purple, Light Purple, New Dark Red
+                      [240, 109, 120], [245, 245, 245], [150, 150, 150], #Vibrant Coral, White, Medium Stone Grey
+                      [140, 140, 140], [100, 100, 100]]                  #Silver Metallic, Dark Stone Gray
+    
+    colorNames = ["Bright Red", "Nougat", "Dark Orange",
+                  "Light Nougat", "Reddish Brown", "Medium Nougat",
+                  "Bright Orange", "Dark Brown", #"Flame Yellowish Orange",
+                  "Sand Yellow", "Brick Yellow", "Warm Gold",
+                  "Bright Yellow", "Cool Yellow", #"White Glow",
+                  "Olive Green", "Vibrant Yellow", "Bright Yellowish Green",
+                  "Spring Yellowish Green", "Bright Green", "Dark Green",
+                  "Aqua, Bright", "Bluish Green", "Medium Azur",
+                  "Dark Azur", "Bright Blue", "Sand Blue",
+                  "Earth Blue", "Black", "Medium Lilac",
+                  "Medium Lavender", "Lavender", "Bright Reddish Violet",
+                  "Bright Purple", "Light Purple", "New Dark Red",
+                  "Vibrant Coral", "White", "Medium Stone Grey",
+                  "Silver Metallic", "Dark Stone Gray"]
+    
+    color_counts = {tuple(c): 0 for c in availableColors}
+
     try:
         image = Image.open(path)        #opens the image and prints the size in terms of pixels
-        print("Loaded image of size: ", image.size)     #--------------------Remove-------------------
     except Exception as e:
         print("Error loading image")
+        exit
 
     image_array = np.array(image)       #convert the image to a numpy array
 
@@ -52,7 +70,16 @@ def main():
             block = image_array[xStart:xEnd, yStart:yEnd, :3]       #get a block of pixels
             avg_rgb = block.mean(axis=(0,1))        #average the RGB values for the new pixel
             lego_image[i, j] = avg_rgb.astype(np.uint8)     #save the new pixel to the finished image
-            colored_image[i,j]  = compare_color(avg_rgb, availableColors)
+
+            chosen  = compare_color(avg_rgb, availableColors)
+            color_counts[tuple(chosen)] += 1
+            colored_image[i,j] = chosen
+
+    print("\nColor usage: ")
+    for (color, name) in zip(availableColors, colorNames):
+        count = color_counts[tuple(color)]
+        if count > 0:
+            print(f"{name} : {count}")
 
     circle_img = circles_from_pixels(colored_image, circle_diameter=20, bg_color=(0,0,0))       #convert the colored_image to a image drawn with circles instead of pixels
     circle_img.show()
