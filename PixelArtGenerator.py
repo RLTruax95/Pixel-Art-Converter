@@ -1,11 +1,13 @@
 import numpy as np
 from PIL import Image
-import colorsys
 from math import sqrt
 from PIL import ImageDraw
 
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill
+
 def main():
-    path =  "C:/Users/Truax/OneDrive/Pictures/KCat2.png" #temporarily load the image
+    path =  "C:/Users/Truax/OneDrive/Pictures/KCat2.PNG" #temporarily load the image
     image_array : np.array  #all the colors for the 1x1 round tile from lego website
     availableColors = [[180, 0, 0], [187, 128, 90], [145, 80, 28],       #Bright Red, Nougat, Dark Orange
                       [225, 190, 161], [95, 49, 9], [170, 125, 85],      #Light Nougat, Reddish Brown, Medium Nougat
@@ -84,6 +86,9 @@ def main():
     circle_img = circles_from_pixels(colored_image, circle_diameter=20, bg_color=(0,0,0))       #convert the colored_image to a image drawn with circles instead of pixels
     circle_img.show()
 
+    export_to_excel(colored_image, availableColors, filename="lego_output.xlsx")
+    print("Excel file 'lego_output.xlsx' created.")
+
 def compare_color(current_color, color_options):        #function to find the pixels nearest color amongst the available colors
     best_distance = None
     color_choice = None
@@ -122,6 +127,46 @@ def circles_from_pixels(pixel_array, circle_diameter=20, bg_color=(255, 255, 255
             draw.ellipse(bbox, fill=color, outline=None)        #draw circle
 
     return out_img
+
+def export_to_excel(pixel_array, available_colors, filename="lego_output.xlsx"):
+    """
+    pixel_array: H x W x 3 uint8 (your colored_image)
+    available_colors: list of [R,G,B] (your availableColors)
+    Excel:
+      - Cell background = pixel color
+      - Cell text = index of that color in available_colors
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import PatternFill
+
+    # Build a fast lookup: (R,G,B) -> index
+    color_to_index = {tuple(c): i for i, c in enumerate(available_colors)}
+
+    h, w, _ = pixel_array.shape
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Lego Mosaic"
+
+    for row in range(h):
+        for col in range(w):
+            rgb = tuple(pixel_array[row, col])
+            r, g, b = rgb
+
+            # Get the index in available_colors
+            idx = color_to_index.get(rgb, -1)  # -1 if not found (should not happen)
+
+            cell = ws.cell(row=row + 1, column=col + 1)
+            cell.value = idx  # this is the number you asked for
+
+            # Convert RGB to ARGB hex string 'FFRRGGBB'
+            hex_color = f"{r:02X}{g:02X}{b:02X}"
+            fill = PatternFill(start_color="FF" + hex_color,
+                               end_color="FF" + hex_color,
+                               fill_type="solid")
+            cell.fill = fill
+
+    wb.save(filename)
     
 if __name__ == '__main__':
     main()
